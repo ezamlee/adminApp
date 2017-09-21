@@ -2703,7 +2703,7 @@ table.text-center th {
   border-bottom-left-radius: 0;
   position: relative;
   overflow-x: hidden;
-  padding: 0;
+  /*padding: 0;*/
 }
 .direct-chat.chat-pane-open .direct-chat-contacts {
   -webkit-transform: translate(0, 0);
@@ -2820,6 +2820,7 @@ table.text-center th {
   width: 100%;
   background: #222d32;
   color: #fff;
+  padding: 10px;
   overflow: auto;
 }
 .contacts-list > li {
