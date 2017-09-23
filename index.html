@@ -223,8 +223,10 @@
         <!-- /.col -->
       </div>
       <!-- /.row -->
+
+      <!-- Main row -->
       <div class="row">
-        <div class="col-sm-4">
+        <div class="col-sm-5">
           <div class="box box-info">
             <div class="box-header with-border">
               <h3 class="box-title"></h3>
@@ -274,9 +276,7 @@
             </form>
           </div>
           <!-- /.box -->
-        </div>
-        <div class="col-sm-8">
-          <div class="box box-info">
+          <div class="box box-success">
             <div class="box-header with-border">
               <h3 class="box-title"></h3>
               <div class="box-tools pull-right">
@@ -306,12 +306,8 @@
             </div>
             <!-- /.box-body -->
           </div>
-          <!-- /.box -->
         </div>
-      </div>
-      <!-- Main row -->
-      <div class="row">
-        <div class="col-md-12">
+        <div class="col-md-7">
           <div class="box">
             <div class="box-header with-border">
               <h3 class="box-title">Monitoring</h3>
@@ -343,7 +339,12 @@
         <div class="col-sm-4">
           <div class="box box-info">
             <div class="box-header with-border">
-              <h3 class="box-title">Horizontal Form</h3>
+              <h3 class="box-title"></h3>
+              <div class="box-tools pull-right">
+                <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+                </button>
+                <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+              </div>
             </div>
             <!-- /.box-header -->
             <!-- form start -->
@@ -360,29 +361,33 @@
                 <div class="form-group">
                   <label for="load_btn" class="col-sm-2 control-label"></label>
                   <div class="col-sm-10">
-                    <input type="button" value="Load messages for last 24 hours" id="load_btn"/>
+                    <input type="button" value="Load messages for last 24 hours" class="btn btn-default" id="load_btn"/>
                   </div>
                 </div>
                 <div class="form-group">
                   <label for="show_from" class="col-sm-2 control-label">Show messages from</label>
                   <div class="col-sm-10">
-                    <input type="text" id="show_from" value="0"/>
+                    <input type="text" id="show_from" class="form-control" value="0"/>
                   </div>
                 </div>
                 <div class="form-group">
                   <label for="show_to" class="col-sm-2 control-label">to</label>
                   <div class="col-sm-10">
-                    <input type="text" id="show_to" value="100"/>
+                    <input type="text" id="show_to" class="form-control" value="100"/>
                   </div>
                 </div>
                 <div class="form-group">
                   <label for="show_btn" class="col-sm-2 control-label"></label>
                   <div class="col-sm-10">
-                    <input type="button" value="Show messages" id="show_btn"/>
+                    <input type="button" class="btn btn-default" value="Show messages" id="show_btn"/>
                   </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-10 control-label" id="log"></label>
                 </div>
               </div>
               <!-- /.box-body -->
+
             </form>
           </div>
           <!-- /.box -->
@@ -401,17 +406,17 @@
             <!-- /.box-header -->
             <div class="box-body">
               <div class="table-responsive">
-                <table id="messages" class="table table-bordered table-striped example1">
+                <table class="table table-bordered table-striped example1">
                 <thead>
                   <tr>
+                    <th>Index</th>
                     <th>Time</th>
                     <th>Speed</th>
                     <th>Coordinates</th>
-                    <th>Location</th>
                     <th>Parameters</th>
                   </tr>
                   </thead>
-                  <tbody>
+                  <tbody id="messages">
 
                 </tbody>
               </table>
@@ -439,7 +444,7 @@
 <!-- ./wrapper -->
 <script type="text/javascript" src="script.js"></script>
 <!-- jQuery 3 -->
-<!-- <script src="bower_components/jquery/dist/jquery.min.js"></script> -->
+<script src="bower_components/jquery/dist/jquery.min.js"></script>
 <!-- Bootstrap 3.3.7 -->
 <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
 <!-- DataTables -->
@@ -476,7 +481,7 @@
 <!-- iCheck 1.0.1 -->
 <script src="plugins/iCheck/icheck.min.js"></script>
 <!-- ChartJS -->
-<script src="bower_components/Chart.js/Chart.js"></script>
+<!-- <script src="bower_components/Chart.js/Chart.js"></script> -->
 <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
 <script src="dist/js/pages/dashboard2.js"></script>
 <!-- AdminLTE for demo purposes -->

@@ -1,7 +1,7 @@
 var map, markers = {}, tile_layer, layers = {}; // global variables
 
 // Print message to log
-function msg(text) { $("#log").prepend(text + "<br/>"); }
+function msg(text) { $("#log").text('');$("#log").prepend(text + "<br/>"); }
 
 function init() { // Execute after login succeed
 	var sess = wialon.core.Session.getInstance(), // get instance of current Session
@@ -204,7 +204,11 @@ function showMessages(from, to){ // print given indicies (from, to) of messages
 		        $("#messages").append( // append current message row to result table
 			        "<tr"+ (i%2==1?" class='odd' ":"") +"><td>"+ (from_index++) +"</td>"+
 			        // print Json data of current message
-			        "<td>"+wialon.util.Json.stringify(data[i])+"</td></tr>");
+			        "<td>"+wialon.util.Json.stringify(data[i]['t'])+"</td>"+
+							"<td>"+ (wialon.util.Json.stringify(data[i]['s'])==0?" 0 ":" "+ wialon.util.Json.stringify(data[i]['s'])+ "") +"</td>"+
+							"<td>"+wialon.util.Json.stringify(data[i]['pos']['x'])+","+wialon.util.Json.stringify(data[i]['pos']['y'])+"</td>"+
+							"<td>"+wialon.util.Json.stringify(data[i]['p'])+"</td>"+
+							"</tr>");
 	        msg(data.length + " messages shown from "+ from+" to "+ to); // Print message to log
 	    }
     );
