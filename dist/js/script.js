@@ -90,7 +90,7 @@ function show_track () {
 				row += "<td class='unit'><img src='" + unit.getIconUrl(16) + "'/> " + unit.getName() + "</td>";
 				row += "<td>Position " + pos.x + ", " + pos.y + "<br> Mileage " + layer.getMileage() + "</td>";
 				row += "<td style='border: 1px solid #" + color + "'>     </td>";
-				row += '<td class="close_btn">x</td>';
+				row += '<td class="btn btn-xs btn-danger close_btn">x</td>';
 
 
 				//add info in table
