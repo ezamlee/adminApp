@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html ng-app="myApp">
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -47,6 +47,7 @@
     z-index: 0
   }
 </style>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.min.js" type=""></script>
 </head>
 <body class="hold-transition skin-blue  sidebar-collapse">
 <div class="wrapper">
@@ -103,7 +104,35 @@
     <section class="content">
       <!-- Info boxes -->
     
-
+      <div class="row" ng-controller="userMappingController">
+        <div class="col-sm-12">
+          <div class="box box-info">
+            <div class="box-header with-border">
+              <h3 class="box-title">User Mapping</h3>
+              <div class="box-tools pull-right">
+                <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+                </button>
+                <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+              </div>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body">
+              <div class="col-sm-4">
+                <table>
+                  <tr>
+                    <th style="font-weight: bold">Users</th>
+                  </tr>  
+                  <tr ng-repeat=""></tr>
+                </table>
+              </div>
+              <div class="col-sm-4">geofences</div>
+              <div class="col-sm-4">map</div>
+              
+            </div>
+              <!-- /.box-body -->
+          </div>
+        </div>
+      </div>
       <!-- Main row -->
       <div class="row">
         <div class="col-sm-5">
@@ -260,13 +289,6 @@
 <script src="bower_components/jquery-slimscroll/jquery.slimscroll.min.js"></script>
 <!-- iCheck 1.0.1 -->
 <script src="plugins/iCheck/icheck.min.js"></script>
-<!-- ChartJS -->
-<!-- <script src="bower_components/Chart.js/Chart.js"></script> -->
-<!-- AdminLTE dashboard demo (This is only for demo purposes) -->
-<script src="dist/js/pages/dashboard2.js"></script>
-<!-- AdminLTE for demo purposes -->
-<script src="dist/js/demo.js"></script>
-
 <script>
   $(function () {
     $('.example1').DataTable()
@@ -274,6 +296,12 @@
     $('.select2').select2()
   })
 </script>
-
+  <script type="text/javascript">
+    // var app = angular.module('myApp', []);
+    // app.controller('customersCtrl', function($scope, $http) {
+    //   $http.get("customers.php")
+    //   .then(function (response) {$scope.names = response.data.records;});
+    // });
+  </script>
 </body>
 </html>
