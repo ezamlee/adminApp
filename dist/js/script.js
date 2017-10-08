@@ -5,40 +5,30 @@ function msg(text) { $("#log").prepend(text + "<br/>"); }
 
 function init() { // Execute after login succeed
 	var sess = wialon.core.Session.getInstance(), // get instance of current Session
-		flags = wialon.item.Item.dataFlag.base | wialon.item.Resource.dataFlag.zones, // specify what kind of data should be returned
+		flags = wialon.item.Item.dataFlag.base | wialon.item.Unit.dataFlag.lastMessage, // specify what kind of data should be returned
 		renderer = wialon.core.Session.getInstance().getRenderer();
 	
 	renderer.addListener("changeVersion", update_renderer);
 	sess.loadLibrary("itemIcon"); // load Icon Library 
-	sess.loadLibrary("resourceZones"); // load Geofences Library
-
+	
 	sess.updateDataFlags( // load items to current session
-	    [{type: "type", data: "user", flags: flags, mode: 0},{type: "type", data: "avl_unit", flags: flags, mode: 0},{type: "type", data: "avl_resource", flags: flags, mode: 0}], // Items specification
+	    [{type: "type", data: "avl_unit", flags: flags, mode: 0}], // Items specification
 	    function (code) { // updateDataFlags callback
 		    if (code) { msg(wialon.core.Errors.getErrorText(code)); return; } // exit if error code
 			
 		    var units = sess.getItems("avl_unit"); // get loaded 'avl_resource's items
-		    var users = sess.getItems("user"); // get loaded 'avl_resource's items
-		    var geofences = sess.getItems("avl_resource"); // get loaded 'avl_resource's items
-
-		    $('#unitsNo').text(units.length);
-		    $('#usersNo').text(users.length);
-		    $('#geofencesNo').text(geofences.length);
-
-
 		    if (!units || !units.length){ msg("No units found"); return; } // check if units found
 		    for (var i = 0; i< units.length; i++){ // construct Select list using found resources
 			    $("#units").append("<option value='"+ units[i].getId() +"'>"+ units[i].getName()+ "</option>");
 		    	$("#unit").append("<option value='"+ units[i].getId() +"'>"+ units[i].getName()+ "</option>");
 			}
-			// bind action to select change event
 			$("#unit").change( showUnit );
-		    $("#build").click( show_track );  // bind action to select change event
+			$("#build").click( show_track );  // bind action to select change event
 			$("#tracks").on("click", ".close_btn", delete_track); //click, when need delete current track
 			$("#tracks").on("click", ".unit", focus_track); //click, when need to see any track
 	});
-
 }
+
 
 
 /*************************** unit trace ************************/
@@ -130,6 +120,8 @@ function showData(event) {
 }
 
 /**************************end unit trace *********************/
+
+
 
 function show_track () {
 	var unit_id =  $("#units").val(),
@@ -263,9 +255,6 @@ function delete_track (evt) {
 	$(row).remove();
 }
 
-
-
-
 function init_map() {
     // create a map in the "map" div, set the view to a given place and zoom
     map = L.map('map').setView([53.9, 27.55], 10);
@@ -275,17 +264,6 @@ function init_map() {
 		zoomReverse: true, 
 		zoomOffset: -1
 	}).addTo(map);
-
-
-
-
-	// // create a map in the "map" div, set the view to a given place and zoom
- //    map = L.map('map').setView([53.9, 27.55], 10);
-
- //    // add an OpenStreetMap tile layer
- //    L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
- //        attribution: '&copy; <a href="http://gurtam.com">Gurtam</a>'
- //    }).addTo(map);
 }
 
 // execute when DOM ready
