@@ -1,37 +1,139 @@
-var map, markers = {}, tile_layer, layers = {}; // global variables
+var map, markers = {}, tile_layer, layers = {}, marker, unitID, unitEventID, polyline, mapWaypts = []; // global variables
 
 // Print message to log
-function msg(text) { $("#log").text('');$("#log").prepend(text + "<br/>"); }
+function msg(text) { $("#log").prepend(text + "<br/>"); }
 
 function init() { // Execute after login succeed
 	var sess = wialon.core.Session.getInstance(), // get instance of current Session
-		flags = wialon.item.Item.dataFlag.base | wialon.item.Unit.dataFlag.lastMessage, // specify what kind of data should be returned
+		flags = wialon.item.Item.dataFlag.base | wialon.item.Resource.dataFlag.zones, // specify what kind of data should be returned
 		renderer = wialon.core.Session.getInstance().getRenderer();
-
+	
 	renderer.addListener("changeVersion", update_renderer);
-	sess.loadLibrary("itemIcon"); // load Icon Library
+	sess.loadLibrary("itemIcon"); // load Icon Library 
+	sess.loadLibrary("resourceZones"); // load Geofences Library
 
 	sess.updateDataFlags( // load items to current session
-	    [{type: "type", data: "avl_unit", flags: flags, mode: 0}], // Items specification
+	    [{type: "type", data: "user", flags: flags, mode: 0},{type: "type", data: "avl_unit", flags: flags, mode: 0},{type: "type", data: "avl_resource", flags: flags, mode: 0}], // Items specification
 	    function (code) { // updateDataFlags callback
 		    if (code) { msg(wialon.core.Errors.getErrorText(code)); return; } // exit if error code
-
-
+			
 		    var units = sess.getItems("avl_unit"); // get loaded 'avl_resource's items
+		    var users = sess.getItems("user"); // get loaded 'avl_resource's items
+		    var geofences = sess.getItems("avl_resource"); // get loaded 'avl_resource's items
+
+		    $('#unitsNo').text(units.length);
+		    $('#usersNo').text(users.length);
+		    $('#geofencesNo').text(geofences.length);
+
+
 		    if (!units || !units.length){ msg("No units found"); return; } // check if units found
 		    for (var i = 0; i< units.length; i++){ // construct Select list using found resources
-          $("#unit").append("<option value='"+ units[i].getId() +"'>"+ units[i].getName()+ "</option>");
 			    $("#units").append("<option value='"+ units[i].getId() +"'>"+ units[i].getName()+ "</option>");
-        }
-        $("#build").click( show_track );  // bind action to select change event
+		    	$("#unit").append("<option value='"+ units[i].getId() +"'>"+ units[i].getName()+ "</option>");
+			}
+			// bind action to select change event
+			$("#unit").change( showUnit );
+		    $("#build").click( show_track );  // bind action to select change event
 			$("#tracks").on("click", ".close_btn", delete_track); //click, when need delete current track
 			$("#tracks").on("click", ".unit", focus_track); //click, when need to see any track
 	});
+
 }
 
+
+/*************************** unit trace ************************/
+
+
+function showUnit(){ // show selected unit on map
+	var val = $("#unit").val(); // get selected unit id
+	if (!val) return; // exit if no unit selected
+	var sess = wialon.core.Session.getInstance(); // get instance of current Session
+	// specify what kind of data should be returned
+	var flags = wialon.item.Unit.dataFlag.lastMessage;
+	var unit = null;
+	if (unitID) { // check if we already have previous unit
+		unit = sess.getItem(unitID);
+		sess.updateDataFlags( // remove previous item from current session
+			[{type: "id", data: unitID, flags: flags, mode: 2}], // item specification
+			function(code) {
+				if (code) { msg(wialon.core.Errors.getErrorText(code)); return; }
+			
+				if (unitEventID) unit.removeListenerById(unitEventID); // unbinding event from this unit
+		});
+	}
+
+	unitID = val;
+	unitEventID = null; // empty event ID
+	mapWaypts = []; // remove all old checkpoints if they were here
+
+	sess.updateDataFlags( // load item with necessary flags to current session
+		[{type: "id", data: unitID, flags: flags, mode: 1}], // item specification
+		function(code) {
+			if (code) { msg(wialon.core.Errors.getErrorText(code)); return; }
+
+			unit = wialon.core.Session.getInstance().getItem(val); // get unit by id
+			if(!unit) return; // exit if no unit
+            var position = unit.getPosition(); // get unit position
+			if (!position) return; // exit if no position 
+			if (map) { // check if map created and we can detect position of unit
+
+                var icon = L.icon({
+                    iconUrl: unit.getIconUrl(32),
+                    iconAnchor: [16, 16]
+                });
+                if (!marker) {
+                    marker = L.marker({lat: position.y, lng: position.x}, {icon: icon}).addTo(map);
+                } else {
+                    marker.setLatLng({lat: position.y, lng: position.x});
+                    marker.setIcon(icon);
+                }
+                map.setView({lat: position.y, lng: position.x});
+
+                if (!polyline) {
+                    polyline = L.polyline([{lat: position.y, lng: position.x}], {color: 'blue'}).addTo(map);
+                }
+
+//				if (polyline) polyline.setMap(null); // if there is alreday path of map - remove it
+//				mapWaypts.push(latlon); // adding point to path array
+			}
+
+			msg("You chose unit: " + unit.getName());
+
+			unitEventID = unit.addListener("messageRegistered", showData); // register event when we will receive message
+	});
+}
+
+function showData(event) {
+	var data = event.getData(); // get data from event
+	
+	if (!data.pos) return; // exit if no position 
+
+	var appended = ''; // here we will put all required information
+	var position = { // get unit position 
+		x: data.pos.x,
+		y: data.pos.y
+	};
+	appended += "Position (x: " + data.pos.x + "; y: " + data.pos.y +")"; // printing position
+	if (data.t) appended += ", time " + wialon.util.DateTime.formatTime(data.t, 1); // printing event time (return user time)
+	msg(appended); // writing to log message about this event
+
+	if (map) { // check if map created
+
+        marker.setLatLng({lat: position.y, lng: position.x});
+
+        if (polyline) {
+            polyline.addLatLng({lat: position.y, lng: position.x});
+        }
+        map.setView({lat: position.y, lng: position.x});
+
+	}
+}
+
+/**************************end unit trace *********************/
+
 function show_track () {
-	var unit_id =  $("#unit").val(),
-		sess = wialon.core.Session.getInstance(), // get instance of current Session
+	var unit_id =  $("#units").val(),
+		sess = wialon.core.Session.getInstance(), // get instance of current Session	
 		renderer = sess.getRenderer(),
 		cur_day = new Date(),
 		from = Math.round(new Date(cur_day.getFullYear(), cur_day.getMonth(), cur_day.getDate()) / 1000), // get begin time - beginning of day
@@ -41,25 +143,25 @@ function show_track () {
 
 		if (!unit) return; // exit if no unit
 
-		// check the existence info in table of such track
+		// check the existence info in table of such track 
 		if (document.getElementById(unit_id))
 		{
 			msg("You already have this track.");
 			return;
 		}
-
+      
 		var pos = unit.getPosition(); // get unit position
 		if(!pos) return; // exit if no position
 
 		// callback is performed, when messages are ready and layer is formed
 		callback =  qx.lang.Function.bind(function(code, layer) {
 			if (code) { msg(wialon.core.Errors.getErrorText(code)); return; } // exit if error code
-
-			if (layer) {
+			
+			if (layer) { 
 				var layer_bounds = layer.getBounds(); // fetch layer bounds
 				if (!layer_bounds || layer_bounds.length != 4 || (!layer_bounds[0] && !layer_bounds[1] && !layer_bounds[2] && !layer_bounds[3])) // check all bounds terms
 				    return;
-
+				
 				// if map existence, then add tile-layer and marker on it
 				if (map) {
 				   //prepare bounds object for map
@@ -71,7 +173,7 @@ function show_track () {
 				    // create tile-layer and specify the tile template
 					if (!tile_layer)
 						tile_layer = L.tileLayer(sess.getBaseUrl() + "/adfurl" + renderer.getVersion() + "/avl_render/{x}_{y}_{z}/"+ sess.getId() +".png", {zoomReverse: true, zoomOffset: -1}).addTo(map);
-					else
+					else 
 						tile_layer.setUrl(sess.getBaseUrl() + "/adfurl" + renderer.getVersion() + "/avl_render/{x}_{y}_{z}/"+ sess.getId() +".png");
 				    // push this layer in global container
 				    layers[unit_id] = layer;
@@ -79,20 +181,18 @@ function show_track () {
 				    var icon = L.icon({ iconUrl: unit.getIconUrl(24) });
 				    //create or get marker object and add icon in it
 				    var marker = L.marker({lat: pos.y, lng: pos.x}, {icon: icon}).addTo(map);
-
+				    
 					marker.setLatLng({lat: pos.y, lng: pos.x}); // icon position on map
 					marker.setIcon(icon); // set icon object in marker
-					markers[unit_id] = marker;
+					markers[unit_id] = marker;	    
 				}
 				// create row-string with data
-				var row = "<tr id='" + unit_id + "'>";
+				var row = "<tr id='" + unit_id + "'>";  
 				// print message with information about selected unit and its position
-				row += "<td class='unit'><img src='" + unit.getIconUrl(16) + "'/> " + unit.getName() + "</td>";
+				row += "<td class='unit'><img src='" + unit.getIconUrl(16) + "'/> " + unit.getName() + "</td>"; 
 				row += "<td>Position " + pos.x + ", " + pos.y + "<br> Mileage " + layer.getMileage() + "</td>";
-				row += "<td style='border: 1px solid #" + color + "'>     </td>";
-				row += '<td class="btn btn-xs btn-danger close_btn">x</td>';
-
-
+				row += "<td><p style='width:20px;height:20px;border: 1px solid #" + color + "'></p>     </td>";
+				row += "<td class='btn btn-xs btn-danger close_btn'>x</td></tr>";
 				//add info in table
 				$("#tracks").append(row);
 			}
@@ -147,10 +247,10 @@ function delete_track (evt) {
 	if (layers && layers[unit_id])
 	{
 		// delete layer from renderer
-		renderer.removeLayer(layers[unit_id], function(code) {
-			if (code)
+		renderer.removeLayer(layers[unit_id], function(code) { 
+			if (code) 
 				msg(wialon.core.Errors.getErrorText(code)); // exit if error code
-			else
+			else 
 				msg("Track removed."); // else send message, then ok
 		});
 		delete layers[unit_id]; // delete layer from container
@@ -163,61 +263,34 @@ function delete_track (evt) {
 	$(row).remove();
 }
 
+
+
+
 function init_map() {
     // create a map in the "map" div, set the view to a given place and zoom
     map = L.map('map').setView([53.9, 27.55], 10);
-	var sess = wialon.core.Session.getInstance(); // get instance of current Session
+	var sess = wialon.core.Session.getInstance(); // get instance of current Session	
     // add WebGIS tile layer
 	L.tileLayer(sess.getBaseGisUrl("render") + "/gis_render/{x}_{y}_{z}/" + sess.getCurrUser().getId() + "/tile.png", {
-		zoomReverse: true,
+		zoomReverse: true, 
 		zoomOffset: -1
 	}).addTo(map);
-}
 
-function loadMessages(){ // load messages function
-	var sess = wialon.core.Session.getInstance(); // get instance of current Session
-	var to = sess.getServerTime(); // get ServerTime, it will be end time
-	var from = to - 3600*24; // get begin time ( end time - 24 hours in seconds )
 
-	var unt = $("#units").val(); // get selected unit id
-	if(!unt){ msg("Select unit first"); return; } // exit if no unit selected
-	var ml = sess.getMessagesLoader(); // get messages loader object for current session
-	ml.loadInterval(unt, from, to, 0, 0, 100, // load messages for given time interval
-	    function(code, data){ // loadInterval callback
-		    if(code){ msg(wialon.core.Errors.getErrorText(code)); return; } // exit if error code
-    		else { msg(data.count +" messages loaded. Click 'Show messages'");} // print success message
-	    }
-    );
-}
 
-function showMessages(from, to){ // print given indicies (from, to) of messages
-	$("#messages").html(""); // clear message container
-	// get messages loader object for current session
-	var ml = wialon.core.Session.getInstance().getMessagesLoader();
-	ml.getMessages(from, to, //get messages data for given indicies
-	    function(code, data){ // getMessages callback
-		    if(code){ msg(wialon.core.Errors.getErrorText(code)); return; } // exit if error code
-		    else if(data.length == 0){ // exit if no messages loaded
-		        msg("Nothing to show. Load messages first"); return;}
-	        var from_index = from; // counter for display
-	        for(var i=0; i<data.length; i++) // display result cycle
-		        $("#messages").append( // append current message row to result table
-			        "<tr"+ (i%2==1?" class='odd' ":"") +"><td>"+ (from_index++) +"</td>"+
-			        // print Json data of current message
-			        "<td>"+wialon.util.Json.stringify(data[i]['t'])+"</td>"+
-							"<td>"+ (wialon.util.Json.stringify(data[i]['s'])==0?" 0 ":" "+ wialon.util.Json.stringify(data[i]['s'])+ "") +"</td>"+
-							"<td>"+wialon.util.Json.stringify(data[i]['pos']['x'])+","+wialon.util.Json.stringify(data[i]['pos']['y'])+"</td>"+
-							"<td>"+wialon.util.Json.stringify(data[i]['p'])+"</td>"+
-							"</tr>");
-	        msg(data.length + " messages shown from "+ from+" to "+ to); // Print message to log
-	    }
-    );
+
+	// // create a map in the "map" div, set the view to a given place and zoom
+ //    map = L.map('map').setView([53.9, 27.55], 10);
+
+ //    // add an OpenStreetMap tile layer
+ //    L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+ //        attribution: '&copy; <a href="http://gurtam.com">Gurtam</a>'
+ //    }).addTo(map);
 }
 
 // execute when DOM ready
 $(document).ready(function () {
-  $("#load_btn").click( loadMessages );
-	$("#show_btn").click( function(){ showMessages($("#show_from").val(),$("#show_to").val()); } );
+
   	wialon.core.Session.getInstance().initSession("https://hst-api.wialon.com"); // init session
     // For more info about how to generate token check
     // http://sdk.wialon.com/playground/demo/app_auth_token
