@@ -12,11 +12,18 @@ function init() { // Execute after login succeed
 	sess.loadLibrary("itemIcon"); // load Icon Library 
 	
 	sess.updateDataFlags( // load items to current session
-	    [{type: "type", data: "avl_unit", flags: flags, mode: 0}], // Items specification
+	    [{type: "type", data: "avl_unit", flags: flags, mode: 0},{type: "type", data: "avl_resource", flags: flags, mode: 0}], // Items specification
 	    function (code) { // updateDataFlags callback
 		    if (code) { msg(wialon.core.Errors.getErrorText(code)); return; } // exit if error code
-			
+
 		    var units = sess.getItems("avl_unit"); // get loaded 'avl_resource's items
+		    var users = sess.getItems("user"); // get loaded 'avl_resource's items
+		    var geofences = sess.getItems("avl_resource"); // get loaded 'avl_resource's items
+
+		    $('#unitsNo').text(units.length);
+		    $('#usersNo').text(users.length);
+		    $('#geofencesNo').text(geofences.length);
+			
 		    if (!units || !units.length){ msg("No units found"); return; } // check if units found
 		    for (var i = 0; i< units.length; i++){ // construct Select list using found resources
 			    $("#units").append("<option value='"+ units[i].getId() +"'>"+ units[i].getName()+ "</option>");
