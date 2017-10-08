@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html ng-app="myApp">
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -46,7 +46,12 @@
   .pagination > .active > a{
     z-index: 0
   }
+  .box{
+    max-height: 500px;
+    overflow: hidden;
+  }
 </style>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.min.js" type=""></script>
 </head>
 <body class="hold-transition skin-blue  sidebar-collapse">
 <div class="wrapper">
@@ -102,6 +107,57 @@
     <!-- Main content -->
     <section class="content">
       <!-- Info boxes -->
+    
+      <div class="row" ng-controller="userMappingController">
+        <div class="col-sm-12">
+          <div class="box box-info">
+            <div class="box-header with-border">
+              <h3 class="box-title">User Mapping</h3>
+              <div class="box-tools pull-right">
+                <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+                </button>
+                <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+              </div>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body">
+              <div class="col-sm-4">
+                <table>
+                  <tr>
+                    <th style="font-weight: bold">Users</th>
+                  </tr>
+                    <!--ng repeat goes here  -->
+                  <tr ng-repeat="user in users" >
+                    <th>
+                      <div class="checkbox">
+                        <label><input type="checkbox" name="user" value="{{user}}">{{user}}</label>
+                      </div>
+                    </th>
+                  </tr>
+                </table>
+              </div>
+              <div class="col-sm-4">
+                <table>
+                  <tr>
+                    <th style="font-weight: bold">Geofences</th>
+                  </tr>
+                    <!--ng repeat goes here  -->
+                  <tr ng-repeat="geo in geofences" >
+                    <th>
+                      <div class="checkbox">
+                        <label><input type="checkbox" name="geo" value="{{geo}}">{{geo}}</label>
+                      </div>
+                    </th>
+                  </tr>
+                </table>
+              </div>
+              <div class="col-sm-4"><button class="btn btn-success" id="mapBtn">Map User</button></div>
+              
+            </div>
+              <!-- /.box-body -->
+          </div>
+        </div>
+      </div>
       <div class="row">
         
         <!-- /.col -->
@@ -150,7 +206,6 @@
         <!-- /.col -->
       </div>
       <!-- /.row -->    
-
       <!-- Main row -->
       <div class="row">
         <div class="col-sm-5">
@@ -336,13 +391,6 @@
 <script src="bower_components/jquery-slimscroll/jquery.slimscroll.min.js"></script>
 <!-- iCheck 1.0.1 -->
 <script src="plugins/iCheck/icheck.min.js"></script>
-<!-- ChartJS -->
-<!-- <script src="bower_components/Chart.js/Chart.js"></script> -->
-<!-- AdminLTE dashboard demo (This is only for demo purposes) -->
-<script src="dist/js/pages/dashboard2.js"></script>
-<!-- AdminLTE for demo purposes -->
-<script src="dist/js/demo.js"></script>
-
 <script>
   $(function () {
     $('.example1').DataTable()
@@ -350,6 +398,49 @@
     $('.select2').select2()
   })
 </script>
-
+  <script type="text/javascript">
+    var app = angular.module('myApp', []);
+    app.controller('userMappingController', function($scope, $http) {
+      $scope.token = '0e31585320d29e3db8ca8cbeab99ed5f893CF3FF2AB55AAB78ACE9078FAC918FDADD455C'
+      $scope.domain = 'core/search_items'
+      $scope.itemsType = 'user'
+      $scope.sid = '04c4b7207b1c0b799541db4c14f63bcc'
+      $scope.token_url = `https://hst-api.wialon.com/wialon/ajax.html?svc=token/login&params={"token":"0e31585320d29e3db8ca8cbeab99ed5f893CF3FF2AB55AAB78ACE9078FAC918FDADD455C"}`
+      $scope.search_url = function(domain,itemsType,sid){
+        return `https://hst-api.wialon.com/wialon/ajax.html?svc=${domain}&params={"spec":{"itemsType":"${itemsType}","propName":"","propValueMask":"*","sortType":"","propType":"propitemname"},"force":1,"flags":4611686018427387903,"from":0,"to":0}&sid=${sid}`
+      }
+      $scope.users = [];
+      $scope.geofences = [];
+      $http.get($scope.token_url).then(function(response){
+        $http.get($scope.search_url($scope.domain,'user',response.data.eid)).then(function (response) {
+          $scope.users = [];
+          response.data.items.forEach((user,index)=>{
+            $scope.users.push(user.nm)
+          })
+        });
+        $http.get($scope.search_url($scope.domain,'avl_resource',response.data.eid)).then(function (response) {
+          $scope.geofences = [];
+          Object.keys(response.data.items['0']['zl']).forEach((geofence_index,index)=>{
+            $scope.geofences.push(response.data.items['0']['zl'][geofence_index].n)
+          })
+        });
+      })
+      $("#mapBtn").click((ev)=>{
+        console.log("clicked")
+        var users = [];
+        var geofences = [] ; 
+        $("[name='user']:checkbox:checked").each((i,o)=>{users.push(o.value)})
+        $("[name='geo']:checkbox:checked").each((i,o)=>{geofences.push(o.value)})
+        users.forEach((user,i1)=>{
+          console.log(user,i1);
+          geofences.forEach((geofence,i2)=>{
+            console.log(geofence,i2);
+            $http.post(`http://ec2-18-220-223-50.us-east-2.compute.amazonaws.com:13456/reg/${user}`, {"room":`${geofence}`}).then((response)=>{alert(response.data);})
+          })
+        })
+      })
+      
+    });
+  </script>
 </body>
 </html>
